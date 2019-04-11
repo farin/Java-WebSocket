@@ -3,6 +3,7 @@ package org.java_websocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.NotYetConnectedException;
@@ -40,7 +41,7 @@ import org.java_websocket.util.Charsetfunctions;
  * Represents one end (client or server) of a single WebSocketImpl connection.
  * Takes care of the "handshake" phase, then allows for easy sending of
  * text frames, and receiving frames through an event-based model.
- * 
+ *
  */
 public class WebSocketImpl implements WebSocket {
 
@@ -101,7 +102,7 @@ public class WebSocketImpl implements WebSocket {
 	private String closemessage = null;
 	private Integer closecode = null;
 	private Boolean closedremotely = null;
-	
+
 	private String resourceDescriptor = null;
 
 	/**
@@ -120,7 +121,7 @@ public class WebSocketImpl implements WebSocket {
 
 	/**
 	 * crates a websocket with client role
-	 * 
+	 *
 	 * @param socket
 	 *            may be unbound
 	 */
@@ -146,7 +147,7 @@ public class WebSocketImpl implements WebSocket {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void decode( ByteBuffer socketBuffer ) {
 		assert ( socketBuffer.hasRemaining() );
@@ -180,16 +181,16 @@ public class WebSocketImpl implements WebSocket {
 		} else {
 			if( tmpHandshakeBytes.remaining() < socketBufferNew.remaining() ) {
 				ByteBuffer buf = ByteBuffer.allocate( tmpHandshakeBytes.capacity() + socketBufferNew.remaining() );
-				tmpHandshakeBytes.flip();
+				((Buffer)tmpHandshakeBytes).flip();
 				buf.put( tmpHandshakeBytes );
 				tmpHandshakeBytes = buf;
 			}
 
 			tmpHandshakeBytes.put( socketBufferNew );
-			tmpHandshakeBytes.flip();
+			((Buffer)tmpHandshakeBytes).flip();
 			socketBuffer = tmpHandshakeBytes;
 		}
-		socketBuffer.mark();
+		((Buffer)socketBuffer).mark();
 		try {
 			if( draft == null ) {
 				HandshakeState isflashedgecase = isFlashEdgeCase( socketBuffer );
@@ -212,7 +213,7 @@ public class WebSocketImpl implements WebSocket {
 							d = d.copyInstance();
 							try {
 								d.setParseMode( role );
-								socketBuffer.reset();
+								((Buffer)socketBuffer).reset();
 								Handshakedata tmphandshake = d.translateHandshake( socketBuffer );
 								if( tmphandshake instanceof ClientHandshake == false ) {
 									flushAndClose( CloseFrame.PROTOCOL_ERROR, "wrong http function", false );
@@ -295,7 +296,7 @@ public class WebSocketImpl implements WebSocket {
 			}
 		} catch ( IncompleteHandshakeException e ) {
 			if( tmpHandshakeBytes.capacity() == 0 ) {
-				socketBuffer.reset();
+				((Buffer)socketBuffer).reset();
 				int newsize = e.getPreferedSize();
 				if( newsize == 0 ) {
 					newsize = socketBuffer.capacity() + 16;
@@ -307,8 +308,8 @@ public class WebSocketImpl implements WebSocket {
 				tmpHandshakeBytes.put( socketBufferNew );
 				// tmpHandshakeBytes.flip();
 			} else {
-				tmpHandshakeBytes.position( tmpHandshakeBytes.limit() );
-				tmpHandshakeBytes.limit( tmpHandshakeBytes.capacity() );
+				((Buffer)tmpHandshakeBytes).position( tmpHandshakeBytes.limit() );
+				((Buffer)tmpHandshakeBytes).limit( tmpHandshakeBytes.capacity() );
 			}
 		}
 		return false;
@@ -438,7 +439,7 @@ public class WebSocketImpl implements WebSocket {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param remote
 	 *            Indicates who "generated" <code>code</code>.<br>
 	 *            <code>true</code> means that this endpoint received the <code>code</code> from the other endpoint.<br>
@@ -539,7 +540,7 @@ public class WebSocketImpl implements WebSocket {
 
 	/**
 	 * Send Text data to the other end.
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 * @throws NotYetConnectedException
 	 */
@@ -552,7 +553,7 @@ public class WebSocketImpl implements WebSocket {
 
 	/**
 	 * Send Binary data (plain bytes) to the other end.
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 * @throws NotYetConnectedException
 	 */
@@ -594,7 +595,7 @@ public class WebSocketImpl implements WebSocket {
 	}
 
 	private HandshakeState isFlashEdgeCase( ByteBuffer request ) throws IncompleteHandshakeException {
-		request.mark();
+		((Buffer)request).mark();
 		if( request.limit() > Draft.FLASH_POLICY_REQUEST.length ) {
 			return HandshakeState.NOT_MATCHED;
 		} else if( request.limit() < Draft.FLASH_POLICY_REQUEST.length ) {
@@ -603,7 +604,7 @@ public class WebSocketImpl implements WebSocket {
 
 			for( int flash_policy_index = 0 ; request.hasRemaining() ; flash_policy_index++ ) {
 				if( Draft.FLASH_POLICY_REQUEST[ flash_policy_index ] != request.get() ) {
-					request.reset();
+					((Buffer)request).reset();
 					return HandshakeState.NOT_MATCHED;
 				}
 			}
@@ -619,7 +620,7 @@ public class WebSocketImpl implements WebSocket {
 
 		resourceDescriptor = handshakedata.getResourceDescriptor();
 		assert( resourceDescriptor != null );
-		
+
 		// Notify Listener
 		try {
 			wsl.onWebsocketHandshakeSentAsClient( this, this.handshakerequest );

@@ -1,5 +1,6 @@
 package org.java_websocket.drafts;
 
+import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -28,9 +29,9 @@ import org.java_websocket.handshake.ServerHandshakeBuilder;
 public class Draft_76 extends Draft_75 {
 	private boolean failed = false;
 	private static final byte[] closehandshake = { -1, 0 };
-	
+
 	private final Random reuseableRandom = new Random();
-	
+
 
 	public static byte[] createChallenge( String key1, String key2, byte[] key3 ) throws InvalidHandshakeException {
 		byte[] part1 = getPart( key1 );
@@ -191,10 +192,10 @@ public class Draft_76 extends Draft_75 {
 
 	@Override
 	public List<Framedata> translateFrame( ByteBuffer buffer ) throws InvalidDataException {
-		buffer.mark();
+		((Buffer)buffer).mark();
 		List<Framedata> frames = super.translateRegularFrame( buffer );
 		if( frames == null ) {
-			buffer.reset();
+			((Buffer)buffer).reset();
 			frames = readyframes;
 			readingState = true;
 			if( currentFrame == null )

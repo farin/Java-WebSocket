@@ -1,5 +1,6 @@
 package org.java_websocket.drafts;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -72,11 +73,11 @@ public class Draft_75 extends Draft {
 		ByteBuffer pay = framedata.getPayloadData();
 		ByteBuffer b = ByteBuffer.allocate( pay.remaining() + 2 );
 		b.put( START_OF_FRAME );
-		pay.mark();
+		((Buffer)pay).mark();
 		b.put( pay );
-		pay.reset();
+		((Buffer)pay).reset();
 		b.put( END_OF_FRAME );
-		b.flip();
+		((Buffer)b).flip();
 		return b;
 	}
 
@@ -136,14 +137,14 @@ public class Draft_75 extends Draft {
 				// currentFrame will be null if END_OF_FRAME was send directly after
 				// START_OF_FRAME, thus we will send 'null' as the sent message.
 				if( this.currentFrame != null ) {
-					currentFrame.flip();
+					((Buffer)currentFrame).flip();
 					FramedataImpl1 curframe = new FramedataImpl1();
 					curframe.setPayload( currentFrame );
 					curframe.setFin( true );
 					curframe.setOptcode( Opcode.TEXT );
 					readyframes.add( curframe );
 					this.currentFrame = null;
-					buffer.mark();
+					((Buffer)buffer).mark();
 				}
 				readingState = false;
 			} else if( readingState ) { // Regular frame data, add to current frame buffer //TODO This code is very expensive and slow
@@ -193,7 +194,7 @@ public class Draft_75 extends Draft {
 	}
 
 	public ByteBuffer increaseBuffer( ByteBuffer full ) throws LimitExedeedException , InvalidDataException {
-		full.flip();
+		((Buffer)full).flip();
 		ByteBuffer newbuffer = ByteBuffer.allocate( checkAlloc( full.capacity() * 2 ) );
 		newbuffer.put( full );
 		return newbuffer;

@@ -1,5 +1,6 @@
 package org.java_websocket.drafts;
 import java.math.BigInteger;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -123,7 +124,7 @@ public class Draft_10 extends Draft {
 			buf.put( mes );
 		// translateFrame ( buf.array () , buf.array ().length );
 		assert ( buf.remaining() == 0 ) : buf.remaining();
-		buf.flip();
+		((Buffer)buf).flip();
 
 		return buf;
 	}
@@ -248,20 +249,20 @@ public class Draft_10 extends Draft {
 			// complete an incomplete frame
 			while ( true ) {
 				try {
-					buffer.mark();
+					((Buffer)buffer).mark();
 					int available_next_byte_count = buffer.remaining();// The number of bytes received
 					int expected_next_byte_count = incompleteframe.remaining();// The number of bytes to complete the incomplete frame
 
 					if( expected_next_byte_count > available_next_byte_count ) {
 						// did not receive enough bytes to complete the frame
 						incompleteframe.put( buffer.array(), buffer.position(), available_next_byte_count );
-						buffer.position( buffer.position() + available_next_byte_count );
+						((Buffer)buffer).position( buffer.position() + available_next_byte_count );
 						return Collections.emptyList();
 					}
 					incompleteframe.put( buffer.array(), buffer.position(), expected_next_byte_count );
-					buffer.position( buffer.position() + expected_next_byte_count );
+					((Buffer)buffer).position( buffer.position() + expected_next_byte_count );
 
-					cur = translateSingleFrame( (ByteBuffer) incompleteframe.duplicate().position( 0 ) );
+					cur = translateSingleFrame( (ByteBuffer) ((Buffer)incompleteframe.duplicate()).position( 0 ) );
 					frames.add( cur );
 					incompleteframe = null;
 					break; // go on with the normal frame receival
@@ -270,23 +271,23 @@ public class Draft_10 extends Draft {
 					int oldsize = incompleteframe.limit();
 					ByteBuffer extendedframe = ByteBuffer.allocate( checkAlloc( e.getPreferedSize() ) );
 					assert ( extendedframe.limit() > incompleteframe.limit() );
-					incompleteframe.rewind();
+					((Buffer)incompleteframe).rewind();
 					extendedframe.put( incompleteframe );
 					incompleteframe = extendedframe;
-					
+
 					return translateFrame( buffer );
 				}
 			}
 		}
 
 		while ( buffer.hasRemaining() ) {// Read as much as possible full frames
-			buffer.mark();
+			((Buffer)buffer).mark();
 			try {
 				cur = translateSingleFrame( buffer );
 				frames.add( cur );
 			} catch ( IncompleteException e ) {
 				// remember the incomplete data
-				buffer.reset();
+				((Buffer)buffer).reset();
 				int pref = e.getPreferedSize();
 				incompleteframe = ByteBuffer.allocate( checkAlloc( pref ) );
 				incompleteframe.put( buffer );
@@ -363,8 +364,8 @@ public class Draft_10 extends Draft {
 				payload.put( (byte) ( (byte) buffer.get( /*payloadstart + i*/) ^ (byte) maskskey[ i % 4 ] ) );
 			}
 		} else {
-			payload.put( buffer.array(), buffer.position(), payload.limit() );
-			buffer.position( buffer.position() + payload.limit() );
+			payload.put( buffer.array(), ((Buffer)buffer).position(), payload.limit() );
+			((Buffer)buffer).position( ((Buffer)buffer).position() + payload.limit() );
 		}
 
 		FrameBuilder frame;
@@ -375,7 +376,7 @@ public class Draft_10 extends Draft {
 			frame.setFin( FIN );
 			frame.setOptcode( optcode );
 		}
-		payload.flip();
+		((Buffer)payload).flip();
 		frame.setPayload( payload );
 		return frame;
 	}

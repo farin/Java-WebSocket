@@ -1,5 +1,6 @@
 package org.java_websocket.drafts;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
@@ -60,14 +61,14 @@ public abstract class Draft {
 			cur = buf.get();
 			sbuf.put( cur );
 			if( prev == (byte) '\r' && cur == (byte) '\n' ) {
-				sbuf.limit( sbuf.position() - 2 );
-				sbuf.position( 0 );
+				((Buffer)sbuf).limit( sbuf.position() - 2 );
+				((Buffer)sbuf).position( 0 );
 				return sbuf;
 
 			}
 		}
 		// ensure that there wont be any bytes skipped
-		buf.position( buf.position() - sbuf.position() );
+		((Buffer)buf).position( buf.position() - sbuf.position() );
 		return null;
 	}
 
@@ -189,7 +190,7 @@ public abstract class Draft {
 		bytebuffer.put( httpheader );
 		if( content != null )
 			bytebuffer.put( content );
-		bytebuffer.flip();
+		((Buffer)bytebuffer).flip();
 		return Collections.singletonList( bytebuffer );
 	}
 
@@ -220,7 +221,7 @@ public abstract class Draft {
 	public void setParseMode( Role role ) {
 		this.role = role;
 	}
-	
+
 	public Role getRole() {
 		return role;
 	}

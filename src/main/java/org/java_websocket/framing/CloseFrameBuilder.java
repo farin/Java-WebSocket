@@ -1,5 +1,6 @@
 package org.java_websocket.framing;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 import org.java_websocket.exceptions.InvalidDataException;
@@ -49,30 +50,30 @@ public class CloseFrameBuilder extends FramedataImpl1 implements CloseFrame {
 		byte[] by = Charsetfunctions.utf8Bytes( m );
 		ByteBuffer buf = ByteBuffer.allocate( 4 );
 		buf.putInt( code );
-		buf.position( 2 );
+		((Buffer)buf).position( 2 );
 		ByteBuffer pay = ByteBuffer.allocate( 2 + by.length );
 		pay.put( buf );
 		pay.put( by );
-		pay.rewind();
+		((Buffer)pay).rewind();
 		setPayload( pay );
 	}
 
 	private void initCloseCode() throws InvalidFrameException {
 		code = CloseFrame.NOCODE;
 		ByteBuffer payload = super.getPayloadData();
-		payload.mark();
+		((Buffer)payload).mark();
 		if( payload.remaining() >= 2 ) {
 			ByteBuffer bb = ByteBuffer.allocate( 4 );
-			bb.position( 2 );
+			((Buffer)bb).position( 2 );
 			bb.putShort( payload.getShort() );
-			bb.position( 0 );
+			((Buffer)bb).position( 0 );
 			code = bb.getInt();
 
 			if( code == CloseFrame.ABNORMAL_CLOSE || code == CloseFrame.TLS_ERROR || code == CloseFrame.NOCODE || code > 4999 || code < 1000 || code == 1004 ) {
 				throw new InvalidFrameException( "closecode must not be sent over the wire: " + code );
 			}
 		}
-		payload.reset();
+		((Buffer)payload).reset();
 	}
 
 	@Override
@@ -87,12 +88,12 @@ public class CloseFrameBuilder extends FramedataImpl1 implements CloseFrame {
 			ByteBuffer b = super.getPayloadData();
 			int mark = b.position();// because stringUtf8 also creates a mark
 			try {
-				b.position( b.position() + 2 );
+				((Buffer)b).position( b.position() + 2 );
 				reason = Charsetfunctions.stringUtf8( b );
 			} catch ( IllegalArgumentException e ) {
 				throw new InvalidFrameException( e );
 			} finally {
-				b.position( mark );
+				((Buffer)b).position( mark );
 			}
 		}
 	}

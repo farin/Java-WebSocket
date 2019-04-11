@@ -8,6 +8,7 @@ package org.java_websocket;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.SelectableChannel;
@@ -129,7 +130,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel {
 				if( read == -1 ) {
 					throw new IOException( "connection closed unexpectedly by peer" );
 				}
-				inCrypt.flip();
+				((Buffer)inCrypt).flip();
 			}
 			inData.compact();
 			unwrap();
@@ -153,7 +154,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel {
 	private synchronized ByteBuffer wrap( ByteBuffer b ) throws SSLException {
 		outCrypt.compact();
 		writeEngineResult = sslEngine.wrap( b, outCrypt );
-		outCrypt.flip();
+		((Buffer)outCrypt).flip();
 		return outCrypt;
 	}
 
@@ -166,7 +167,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel {
 			rem = inData.remaining();
 			readEngineResult = sslEngine.unwrap( inCrypt, inData );
 		} while ( readEngineResult.getStatus() == SSLEngineResult.Status.OK && ( rem != inData.remaining() || sslEngine.getHandshakeStatus() == HandshakeStatus.NEED_UNWRAP ) );
-		inData.flip();
+		((Buffer)inData).flip();
 		return inData;
 	}
 
@@ -194,12 +195,12 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel {
 			if( inCrypt.capacity() != netBufferMax )
 				inCrypt = ByteBuffer.allocate( netBufferMax );
 		}
-		inData.rewind();
-		inData.flip();
-		inCrypt.rewind();
-		inCrypt.flip();
-		outCrypt.rewind();
-		outCrypt.flip();
+		((Buffer)inData).rewind();
+		((Buffer)inData).flip();
+		((Buffer)inCrypt).rewind();
+		((Buffer)inCrypt).flip();
+		((Buffer)outCrypt).rewind();
+		((Buffer)outCrypt).flip();
 		bufferallocations++;
 	}
 
@@ -220,7 +221,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel {
 	/**
 	 * Blocks when in blocking mode until at least one byte has been decoded.<br>
 	 * When not in blocking mode 0 may be returned.
-	 * 
+	 *
 	 * @return the number of bytes read.
 	 **/
 	public int read( ByteBuffer dst ) throws IOException {
@@ -253,10 +254,10 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel {
 		 * Thats the case if inData is empty or inCrypt holds to less data than necessary for decryption
 		 */
 		assert ( inData.position() == 0 );
-		inData.clear();
+		((Buffer)inData).clear();
 
 		if( !inCrypt.hasRemaining() )
-			inCrypt.clear();
+			((Buffer)inCrypt).clear();
 		else
 			inCrypt.compact();
 
@@ -264,7 +265,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel {
 			if( socketChannel.read( inCrypt ) == -1 ) {
 				return -1;
 			}
-		inCrypt.flip();
+		((Buffer)inCrypt).flip();
 		unwrap();
 
 		int transfered = transfereTo( inData, dst );
@@ -281,7 +282,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel {
 			return transfereTo( inData, dst );
 		}
 		if( !inData.hasRemaining() )
-			inData.clear();
+			((Buffer)inData).clear();
 		// test if some bytes left from last read (e.g. BUFFER_UNDERFLOW)
 		if( inCrypt.hasRemaining() ) {
 			unwrap();

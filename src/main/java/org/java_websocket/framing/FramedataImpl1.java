@@ -1,5 +1,6 @@
 package org.java_websocket.framing;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -78,17 +79,17 @@ public class FramedataImpl1 implements FrameBuilder {
 		ByteBuffer b = nextframe.getPayloadData();
 		if( unmaskedpayload == null ) {
 			unmaskedpayload = ByteBuffer.allocate( b.remaining() );
-			b.mark();
+			((Buffer)b).mark();
 			unmaskedpayload.put( b );
-			b.reset();
+			((Buffer)b).reset();
 		} else {
-			b.mark();
-			unmaskedpayload.position( unmaskedpayload.limit() );
-			unmaskedpayload.limit( unmaskedpayload.capacity() );
+			((Buffer)b).mark();
+			((Buffer)unmaskedpayload).position( unmaskedpayload.limit() );
+			((Buffer)unmaskedpayload).limit( unmaskedpayload.capacity() );
 
 			if( b.remaining() > unmaskedpayload.remaining() ) {
 				ByteBuffer tmp = ByteBuffer.allocate( b.remaining() + unmaskedpayload.capacity() );
-				unmaskedpayload.flip();
+				((Buffer)unmaskedpayload).flip();
 				tmp.put( unmaskedpayload );
 				tmp.put( b );
 				unmaskedpayload = tmp;
@@ -96,8 +97,8 @@ public class FramedataImpl1 implements FrameBuilder {
 			} else {
 				unmaskedpayload.put( b );
 			}
-			unmaskedpayload.rewind();
-			b.reset();
+			((Buffer)unmaskedpayload).rewind();
+			((Buffer)b).reset();
 		}
 		fin = nextframe.isFin();
 	}

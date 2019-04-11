@@ -1,6 +1,7 @@
 package org.java_websocket;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.spi.AbstractSelectableChannel;
@@ -10,9 +11,9 @@ import org.java_websocket.WebSocket.Role;
 public class SocketChannelIOHelper {
 
 	public static boolean read( final ByteBuffer buf, WebSocketImpl ws, ByteChannel channel ) throws IOException {
-		buf.clear();
+		((Buffer)buf).clear();
 		int read = channel.read( buf );
-		buf.flip();
+		((Buffer)buf).flip();
 
 		if( read == -1 ) {
 			ws.eot();
@@ -26,9 +27,9 @@ public class SocketChannelIOHelper {
 	 * @return returns whether there is more data left which can be obtained via {@link #readMore(ByteBuffer, WebSocketImpl, WrappedByteChannel)}
 	 **/
 	public static boolean readMore( final ByteBuffer buf, WebSocketImpl ws, WrappedByteChannel channel ) throws IOException {
-		buf.clear();
+		((Buffer)buf).clear();
 		int read = channel.readMore( buf );
-		buf.flip();
+		((Buffer)buf).flip();
 
 		if( read == -1 ) {
 			ws.eot();
